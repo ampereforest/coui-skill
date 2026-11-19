@@ -13,17 +13,20 @@ dependencies {
     implementation("io.github.itoseo:coui-icons:0.0.1-alpha11")       // Optional system icons
     implementation("io.github.itoseo:coui-material3:0.0.1-alpha11")   // Optional Material 3 Monet bridge
 
-    // Option B: Kyant0 continuous G2 squircle geometry & backdrop glass
+    // Option B: Kyant0 continuous G2 squircle geometry & Liquid Glass backdrop refraction
     implementation("io.github.kyant0:capsule:2.1.0")
-    implementation("io.github.kyant0:backdrop:1.0.0")
+    implementation("io.github.kyant0:backdrop:2.0.1")
 }
 ```
 
+> **Kotlin `2.3.x` vs `2.4.x` Vendoring Note for `com.kyant.backdrop`:**
+> Upstream `io.github.kyant0:backdrop:2.0.1` is published with Kotlin `2.4.10` / Compose `1.12.0` metadata. For Android projects on Kotlin `2.2.x`–`2.3.x` / Compose `1.10.x`, vendor the 30 pure-Kotlin files from `Kyant0/AndroidLiquidGlass` (`backdrop/src/{commonMain,androidMain}/kotlin/com/kyant/backdrop/`) directly into `app/src/main/java/com/kyant/backdrop/` alongside `com.kyant.capsule`, merging the 4 `androidMain` `actual` files (`Platform.kt`, `RuntimeShader.kt`, `internal/Paint.kt`, `internal/RenderEffect.kt`) and removing the optional `com.kyant.shapes.RoundedRectangularShape` branch in `effects/Lens.kt` and `@Language("AGSL")` annotation in `internal/Shaders.kt`.
+
 ---
 
-## 2. Continuous Squircle Cards, Text-First Rows & Inset Dividers
+## 2. Continuous Squircle Cards, Text-First Rows (No Inline Status Pills) & Inset Dividers
 
-Never tint secondary clickable cards gray, and omit bulky left icon boxes on standard Settings subpage rows so all row titles align cleanly at `16.dp` internal padding (`32.dp` from screen edge). Use **`1.dp` `#14000000`** (light) / **`#24FFFFFF`** (dark) dividers inset **`16.dp`** horizontally **only between** adjacent rows inside multi-row cards.
+Never tint secondary clickable cards gray, omit bulky left icon boxes on standard Settings subpage rows so all row titles align cleanly at `16.dp` internal padding (`32.dp` from screen edge), and **NEVER place inline colored status pills** (`"eSIM"`, `"Active"`, `"SIM 2"`, etc.) next to preference row titles. Use **`1.dp` `#14000000`** (light) / **`#24FFFFFF`** (dark) dividers inset **`16.dp`** horizontally **only between** adjacent rows inside multi-row cards.
 
 ```kotlin
 @Composable
@@ -149,68 +152,179 @@ fun CouiSwitchPreferenceRow(
 
 ---
 
-## 4. Floating Detail TopBar & `42–44dp` Circular Frosted-Glass Back Button
+## 4. Floating Detail TopBar & `46.dp` `Kyant0/AndroidLiquidGlass` Circular Back Button (`LayerBackdrop` Scroll-Under Refraction)
 
-Detail subpages (`Mobile network`, `Personal hotspot`, `Battery health`, `Manage eSIM`) float a **`60.dp`** top bar below `WindowInsets.statusBars` over the top of the `LazyColumn` using a subtle vertical surface scrim—with **no redundant right-bar icons**:
+Detail subpages (`Mobile network`, `Personal hotspot`, `Battery health`, `Manage eSIM`) float a **`64.dp`** top bar below `WindowInsets.statusBars` as a **sibling overlaid above** a full-screen `Modifier.layerBackdrop(backdrop)` scrollable container so cards slide *under* the header and visibly refract inside the `46.dp` circular glass back button—with **no redundant right-bar icons**:
 
-1. **`42.dp`–`44.dp` `CircleShape` frosted-glass back button:**
-   - Fill: `#E6FFFFFF` (light) / `#26FFFFFF` (dark)
-   - Border: `0.5.dp` vertical specular rim (`#FFFFFF -> #18000000` light, `#3DFFFFFF -> #14FFFFFF` dark)
-   - Elevation: `4.dp`–`6.dp` soft ambient shadow (`ambientColor = #26000000`, `spotColor = #1C000000` in light; `0.dp` in dark)
-   - Icon: Crisp `22.dp`–`24.dp` wide back arrow (`2.dp` rounded stroke)
-   - Press motion: `spring(dampingRatio = 0.75f, stiffness = 500f)` scaling to `0.93f`
-2. **Title:** `19.5.sp` `FontWeight.Medium`, `12.dp` right of the circular button, single-line ellipsis.
+> **Critical Layer Architecture Rule:**
+> Attach `Modifier.layerBackdrop(backdrop)` to the scrollable background container (`Box` wrapping `LazyColumn`), and place `CouiTopAppBar(backdrop = backdrop, ...)` as a **sibling** above it inside the root `Box`. Never place a `drawBackdrop` composable inside its own `layerBackdrop` subtree.
+
+1. **`46.dp` `CircleShape` `Kyant0/AndroidLiquidGlass` (`com.kyant.backdrop`) back button:**
+   - **Real-time effects (`API >= 33`):** `vibrancy()`, `blur(4f.dp.toPx())`, `lens(refractionHeight = 10f.dp.toPx(), refractionAmount = 20f.dp.toPx(), depthEffect = true)`
+   - **Specular rim (`Highlight`):** `Highlight(width = 0.75.dp, alpha = if (isDark) 0.45f else 0.90f, style = HighlightStyle.Default)` — crisp bright `#FDFDFD`–`#FEFEFE` rim with zero harsh dark `1px` border ring
+   - **Diffuse ambient drop shadow (`Shadow`):** `Shadow(radius = 18.dp, offset = DpOffset(0.dp, 5.dp), color = Color.Black.copy(alpha = if (isDark) 0.32f else 0.09f))` matching the wide soft downward shadow (`+19px` peak fading to `+49px`) measured on `hotspot-ui.jpg`
+   - **Translucent surface fill (`onDrawSurface`):** `drawRect(if (isDark) Color(0x28FFFFFF) else Color(0xB8F6F7F9))` (`#F6F7F9` frosted glass in Light Mode, `#28FFFFFF` in Dark Mode)
+   - **Icon geometry:** Sleek wide-winged **`24.dp`–`25.dp`** back arrow canvas (`~20.3dp × 16.6dp` glyph bounds) with refined **`1.65.dp`** rounded stroke (`startX = 0.14f`, `endX = 0.86f`, `headLen = 0.30f`, `headHeight = headLen * 0.92f`)
+   - **Press motion:** `spring(dampingRatio = 0.70f, stiffness = 600f)` scaling to `0.94f`
+2. **Translucent Top Scrim & Title:**
+   - Top bar uses a soft translucent vertical gradient scrim (`colors.surface.copy(alpha = 0.90f)` → `colors.surface.copy(alpha = 0.65f)` → `Color.Transparent`) so scrolled cards remain visible as they pass behind the `46.dp` Liquid Glass button.
+   - Title: `19.5.sp`–`20.sp` `FontWeight.Medium`, `12.dp` right of the `46.dp` circular button, single-line ellipsis.
 
 ```kotlin
 @Composable
-fun CouiGlassBackButton(onBack: () -> Unit) {
+fun CouiBackButton(
+    onClick: () -> Unit,
+    backdrop: Backdrop? = null,
+    modifier: Modifier = Modifier,
+) {
     val colors = CouiTheme.colors
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale = remember { Animatable(1f) }
     LaunchedEffect(isPressed) {
-        scale.animateTo(if (isPressed) 0.93f else 1f, spring(dampingRatio = 0.75f, stiffness = 500f))
+        scale.animateTo(
+            targetValue = if (isPressed) 0.94f else 1f,
+            animationSpec = spring(dampingRatio = 0.70f, stiffness = 600f),
+        )
     }
 
-    val glassFill = if (colors.isDark) Color(0x26FFFFFF) else Color(0xE6FFFFFF)
-    val glassBorder = if (colors.isDark) {
-        Brush.verticalGradient(listOf(Color(0x3DFFFFFF), Color(0x14FFFFFF)))
+    val isDark = colors.isDark
+    val surfaceColor = if (isDark) Color(0x28FFFFFF) else Color(0xB8F6F7F9)
+
+    val glassModifier = if (backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Modifier.drawBackdrop(
+            backdrop = backdrop,
+            shape = { CircleShape },
+            effects = {
+                vibrancy()
+                blur(4f.dp.toPx())
+                lens(
+                    refractionHeight = 10f.dp.toPx(),
+                    refractionAmount = 20f.dp.toPx(),
+                    depthEffect = true,
+                )
+            },
+            highlight = {
+                Highlight(
+                    width = 0.75.dp,
+                    alpha = if (isDark) 0.45f else 0.90f,
+                    style = HighlightStyle.Default,
+                )
+            },
+            shadow = {
+                Shadow(
+                    radius = 18.dp,
+                    offset = DpOffset(0.dp, 5.dp),
+                    color = Color.Black.copy(alpha = if (isDark) 0.32f else 0.09f),
+                )
+            },
+            onDrawSurface = {
+                drawRect(surfaceColor)
+            },
+        )
     } else {
-        Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0x18000000)))
+        // API < 33 graceful fallback
+        Modifier
+            .shadow(
+                elevation = if (isDark) 0.dp else 10.dp,
+                shape = CircleShape,
+                ambientColor = Color(0x24000000),
+                spotColor = Color(0x1E000000),
+            )
+            .clip(CircleShape)
+            .background(if (isDark) Color(0x28FFFFFF) else Color(0xCCF6F7F9))
     }
 
     Box(
-        modifier = Modifier
-            .size(44.dp)
-            .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
-            .shadow(
-                elevation = if (colors.isDark) 0.dp else 6.dp,
-                shape = CircleShape,
-                ambientColor = Color(0x26000000),
-                spotColor = Color(0x1C000000),
-            )
-            .clip(CircleShape)
-            .background(glassFill)
-            .border(width = 0.5.dp, brush = glassBorder, shape = CircleShape)
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onBack),
+        modifier = modifier
+            .size(46.dp)
+            .graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            }
+            .then(glassModifier)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         val arrowColor = colors.onSurface
-        Canvas(modifier = Modifier.size(23.dp)) {
-            val stroke = 2.dp.toPx()
-            val cy = size.height / 2f
-            val startX = size.width * 0.16f
-            val endX = size.width * 0.84f
+        Canvas(modifier = Modifier.size(24.dp)) {
+            val stroke = 1.65.dp.toPx()
+            val cy = size.height * 0.50f
+            val startX = size.width * 0.14f
+            val endX = size.width * 0.86f
             val headLen = size.width * 0.30f
-            drawLine(arrowColor, Offset(startX + stroke * 0.35f, cy), Offset(endX, cy), stroke, StrokeCap.Round)
+            val headHalfH = headLen * 0.92f
+
+            drawLine(
+                color = arrowColor,
+                start = Offset(startX + stroke * 0.35f, cy),
+                end = Offset(endX, cy),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round,
+            )
             val chevron = Path().apply {
-                moveTo(startX + headLen, cy - headLen)
+                moveTo(startX + headLen, cy - headHalfH)
                 lineTo(startX, cy)
-                lineTo(startX + headLen, cy + headLen)
+                lineTo(startX + headLen, cy + headHalfH)
             }
-            drawPath(chevron, arrowColor, style = Stroke(stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            drawPath(
+                path = chevron,
+                color = arrowColor,
+                style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
         }
     }
+}
+```
+
+### Root Screen Layout with `rememberLayerBackdrop()` Scroll-Under Refraction
+
+```kotlin
+val backdrop = rememberLayerBackdrop()
+val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+Box(
+    modifier = Modifier
+        .fillMaxSize()
+        .background(CouiTheme.colors.surface), // #F0F1F3 light / #000000 dark
+) {
+    // 1. Scrollable content layer captured by LayerBackdrop
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .layerBackdrop(backdrop)
+            .background(CouiTheme.colors.surface),
+    ) {
+        CompositionLocalProvider(LocalOverscrollFactory provides null) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .couiBouncyOverscroll()
+                    .navigationBarsPadding(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = statusBarTop + 68.dp,
+                    bottom = 28.dp,
+                ),
+            ) {
+                // CouiCard items...
+            }
+        }
+    }
+
+    // 2. Sibling floating ColorOS 17 Liquid Glass Top App Bar
+    CouiTopAppBar(
+        title = "Manage eSIM",
+        onBack = onBack,
+        backdrop = backdrop,
+        modifier = Modifier.align(Alignment.TopCenter),
+    )
 }
 ```
 

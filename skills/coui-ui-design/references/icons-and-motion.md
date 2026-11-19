@@ -52,7 +52,7 @@ COUI avoids sharp Material ripples (`indication = null`) and instead drives tact
 
 | Interaction | Physics / Constants | Behavior |
 |---|---|---|
-| **Standard Card / Button Press** (`CouiPressMotion`) | `response = 0.25f` (`0.3f` pills), `bounce = 0f` | Scales down toward `0.85f..0.97f` proportional to view area (`0.93f` for `44dp` frosted back button) |
+| **Standard Card / Button Press** (`CouiPressMotion`) | `response = 0.25f` (`0.3f` pills), `bounce = 0f` | Scales down toward `0.85f..0.97f` proportional to view area (`0.94f` with `dampingRatio = 0.70f, stiffness = 600f` for the `46.dp` `AndroidLiquidGlass` circular back button, paired with the wide-winged `24.dp`–`25.dp` `1.65.dp`-stroke back arrow) |
 | **Card / Button Release** | `response = 0.5f`, `bounce = 0.6f` (`0.5f` pills) | Smooth elastic return to `1.0f` preserving interruptible velocity |
 | **List Rubber-Band Overscroll** (`couiBouncyOverscroll`) | `maxOffset * (1 - exp(-|drag| / k))`, `dampingRatio = 0.72f`, `stiffness = 380f` | Translates list via `graphicsLayer.translationY` at both top & bottom edges without vertical text stretch; works on single-screen and multi-screen lists |
 | **Switch Toggle** (`CouiSwitchMotion`) | `response = 0.4f`, `bounce = 0.3f` | Thumb moves across `44.dp` track while stretching to `1.3x` width at `p = 0.347` |

@@ -10,9 +10,9 @@ ColorOS 17 uses an **inverted background hierarchy**: soft cool off-white page c
 
 | Token Role | Light Mode | Dark Mode (AMOLED) | COUI / Android Usage |
 |---|---|---|---|
-| `background` (Page Canvas) | `#F5F6F8` (Settings subpages) / `#F0F1F3` (system canvas) | `#000000` | Root scrollable `Scaffold` / page background |
-| `card` (`couiColorCardBackground`) | `#FFFFFF` | `#1C1C1E` (or `#1AFFFFFF` 10% white over `#000000`) | Grouped & standalone preference cards |
-| `topBarGlassButton` | `#E6FFFFFF` (`0.5.dp` gradient rim `#FFFFFF -> #18000000`) | `#26FFFFFF` (`0.5.dp` gradient rim `#3DFFFFFF -> #14FFFFFF`) | `42–44dp` circular frosted back button (`elevation = 4–6dp`) |
+| `background` (Page Canvas) | **`#F0F1F3`** (ColorOS 17 V6 Settings & system canvas) | `#000000` | Root scrollable `Scaffold` / page background (`#EBECEE` subtle top scroll-under scrim) |
+| `card` (`couiColorCardBackground`) | `#FFFFFF` | `#1C1C1E` (or `#1AFFFFFF` 10% white over `#000000`) | Grouped & standalone `20.dp` squircle preference cards |
+| `topBarLiquidGlassButton` | `Color(0xB8F6F7F9)` (`#F6F7F9` translucent over `LayerBackdrop`, `0.75.dp` specular rim `alpha = 0.90f`, diffuse shadow `radius = 18.dp, offset = (0.dp, 5.dp), alpha = 0.09f`) | `Color(0x28FFFFFF)` (translucent over `LayerBackdrop`, `0.75.dp` specular rim `alpha = 0.45f`, diffuse shadow `radius = 18.dp, offset = (0.dp, 5.dp), alpha = 0.32f`) | `46.dp` circular `Kyant0/AndroidLiquidGlass` (`com.kyant.backdrop`) back button with live `vibrancy()`, `blur(4.dp)`, `lens(10.dp, 20.dp, depthEffect = true)` |
 | `surface` (Dialog / Bottom Sheet) | `#FFFFFF` | `#1C1C1E` / `#1E1E1E` | Bottom sheet panels, modal dialogs (`coui_color_background_elevated`) |
 | `container` / `menuSurface` | `#FFFFFF` | `#333333` | Floating popups, dropdown menus (`coui_color_surface_top`) |
 | `pressed` / `surfaceContainerHigh` | `#E8E9EB` | `#2C2C2E` / `#33FFFFFF` | List row press tint (`coui_color_card_pressed`) & `"You might be looking for"` footer |
@@ -66,18 +66,20 @@ Never mix circular `RoundedCornerShape` on primary surfaces—always use `Contin
 | Dialogs & Floating Modals | `24.dp`–`28.dp` continuous | Floating bottom dialogs inset `16.dp` horizontally |
 | Bottom Sheet Top Corners | `28.dp` continuous | `coui_panel_os_16_1_radius_28_dp` |
 | Popup Menus / Dropdowns | `16.dp` continuous | `coui_popup_list_window_os_16_1_radius_16_dp` |
-| Inline Status Pill (`eSIM`, `Active`) | `ContinuousCapsule` | Compact `horizontal = 6.dp, vertical = 1.5.dp`, `10.5.sp` Medium |
 | Buttons, Chips, Floating Docks | `ContinuousCapsule` (`50%`) | `coui_btn_large_height_min = 44.dp–46.dp` |
-| TopBar Frosted Back Button | `CircleShape` (`42.dp–44.dp`) | `#E6FFFFFF` fill, `0.5.dp` gradient rim, `4.dp–6.dp` ambient shadow, `22–24.dp` `2.dp`-stroke arrow |
+| TopBar Liquid Glass Back Button | `CircleShape` (`46.dp`) | `Kyant0/AndroidLiquidGlass` (`drawBackdrop`): `Color(0xB8F6F7F9)` light / `Color(0x28FFFFFF)` dark fill, `0.75.dp` `HighlightStyle.Default` specular rim, `18.dp` radius (`5.dp` Y offset) diffuse ambient shadow, `24.dp`–`25.dp` wide-winged `1.65.dp`-stroke arrow |
+
+> **Anti-Pattern Callout (No Inline Colored Status Pills on Settings Rows):**
+> Authentic ColorOS 17 Settings subpages (`Personal hotspot`, `Mobile network`, `Battery health`) **NEVER** place inline colored pill badges (`"eSIM"`, `"Active"`, `"SIM 2"`, `"Checking"`) beside preference row titles. Always express active/routing state through a clean `16.sp` Medium row title, a single- or two-line `13.sp` `#8C8C8C` summary subtitle, and the `44.dp × 24.dp` `CouiSwitch` (`ON` / `OFF`) or trailing `#8C8C8C` status text.
 
 ### Layout Metrics (Calibrated to ColorOS 17 Settings Subpages)
 
 - **Page outer screen margin:** `16.dp`
 - **Card spacing (unlabelled):** `12.dp` between stacked standalone cards
 - **Section header spacing:** `8.dp` top spacer + `padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 6.dp)` inside `16.dp` list padding = **`32.dp` total inset from screen edge**
-- **Settings row density:** `minHeight = 52.dp`, internal `PaddingValues(horizontal = 16.dp, vertical = 14.dp)` (no bulky left icon boxes on standard text/toggle rows)
+- **Settings row density:** `minHeight = 52.dp`, internal `PaddingValues(horizontal = 16.dp, vertical = 14.dp)` (no bulky left icon boxes and no inline colored status pills on standard text/toggle rows)
 - **Internal dividers:** `1.dp` `#14000000` (light) / `#24FFFFFF` (dark), inset `16.dp` horizontally to align cleanly with row text
-- **Detail TopBar height:** `60.dp` below `WindowInsets.statusBars`, floated over content with a soft vertical surface scrim
+- **Detail TopBar height:** `64.dp` below `WindowInsets.statusBars`, overlaid as a sibling above the `Modifier.layerBackdrop(backdrop)` scrollable container with a translucent vertical gradient scrim so cards glide and refract underneath the `46.dp` Liquid Glass back button
 
 ---
 
@@ -100,12 +102,11 @@ TextStyle(
 | Role | Size | Weight | Color / Usage |
 |---|---|---|---|
 | Expanded Large Title | `32.sp`–`40.sp` | `Bold` (`700`) | `onSurface`, inside collapsible `LargeTopAppBar` |
-| Detail TopBar Title | `19.5.sp` | `Medium` (`500`) | Single-line ellipsis, `12.dp` right of `44.dp` frosted back button |
+| Detail TopBar Title | `19.5.sp`–`20.sp` | `Medium` (`500`) | Single-line ellipsis, `12.dp` right of `46.dp` Liquid Glass back button |
 | Section Category Header | `13.sp` | `Medium` (`500`) | `#7F7F7F` light / `#8AFFFFFF` dark, `32.dp` total screen inset |
-| Preference Row Title | `16.sp` | `Medium` (`500`) | `onSurface` |
+| Preference Row Title | `16.sp` | `Medium` (`500`) | `onSurface` (never append inline colored status pills beside row titles) |
 | Preference Summary | `13.sp` | `Normal` (`400`) | `#8C8C8C` light / `#73FFFFFF` dark, `2.dp` below title |
 | Trailing Value / Action | `14.sp` | `Normal` (value) / `Medium` (action) | `#8C8C8C` for passive status (`Off`, `80%`), `#0080FF` for borderless inline actions (`Copy`) |
-| Inline Status Badge | `10.5.sp` | `Medium` (`500`) | Sleek low-profile tinted `ContinuousCapsule` (`eSIM`, `Active`) |
 | Pill Button Label | `16.sp` | `Medium` (`500`) | Centered in `ContinuousCapsule` (`minHeight = 46.dp`) |
 
 ---
