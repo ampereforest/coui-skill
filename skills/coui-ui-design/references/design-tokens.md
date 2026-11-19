@@ -1,39 +1,42 @@
 # ColorOS 17 (COUI) Design Tokens & Physical Constants
 
-Calibrated against ColorOS 16/17 (`com.oplus.uxdesign` / `Theme.COUI`), `ItosEO/COUI-Kit`, `suqi8/coui`, `MiToverG422/ONextBox`, and `Kyant0/Capsule`.
+Calibrated against native ColorOS 17 Settings subpages (`Mobile network`, `Personal hotspot`, `Battery health`), `com.oplus.uxdesign` / `Theme.COUI`, `ItosEO/COUI-Kit`, `suqi8/coui`, `MiToverG422/ONextBox`, `ampereforest/dada_esim_compat`, and `Kyant0/Capsule`.
 
 ---
 
 ## 1. Surface & Semantic Color Roles (Light vs. Dark AMOLED)
 
-ColorOS uses an **inverted background hierarchy**: gray page canvas + crisp white cards in Light Mode, and true `#000000` AMOLED canvas + translucent white cards in Dark Mode. Dialogs and bottom sheets always sit on elevated opaque surfaces (`#FFFFFF` / `#1E1E1E`), never gray canvas.
+ColorOS 17 uses an **inverted background hierarchy**: soft cool off-white page canvas + crisp pure white cards in Light Mode, and true `#000000` AMOLED canvas + `#1C1C1E` (or translucent white) cards in Dark Mode. Dialogs and bottom sheets always sit on elevated opaque surfaces (`#FFFFFF` / `#1C1C1E`), never gray canvas.
 
 | Token Role | Light Mode | Dark Mode (AMOLED) | COUI / Android Usage |
 |---|---|---|---|
-| `background` (Page Canvas) | `#F0F1F2` (COUI native) / `#F7F8FA` (Settings subpages) | `#000000` | Root scrollable `Scaffold` / page background |
-| `card` (`couiColorCardBackground`) | `#FFFFFF` | `#1AFFFFFF` (10% white over `#000000`) | Grouped & standalone preference cards |
-| `surface` (Dialog / Bottom Sheet) | `#FFFFFF` | `#1E1E1E` | Bottom sheet panels, modal dialogs (`coui_color_background_elevated`) |
+| `background` (Page Canvas) | `#F5F6F8` (Settings subpages) / `#F0F1F3` (system canvas) | `#000000` | Root scrollable `Scaffold` / page background |
+| `card` (`couiColorCardBackground`) | `#FFFFFF` | `#1C1C1E` (or `#1AFFFFFF` 10% white over `#000000`) | Grouped & standalone preference cards |
+| `topBarGlassButton` | `#E6FFFFFF` (`0.5.dp` gradient rim `#FFFFFF -> #18000000`) | `#26FFFFFF` (`0.5.dp` gradient rim `#3DFFFFFF -> #14FFFFFF`) | `42–44dp` circular frosted back button (`elevation = 4–6dp`) |
+| `surface` (Dialog / Bottom Sheet) | `#FFFFFF` | `#1C1C1E` / `#1E1E1E` | Bottom sheet panels, modal dialogs (`coui_color_background_elevated`) |
 | `container` / `menuSurface` | `#FFFFFF` | `#333333` | Floating popups, dropdown menus (`coui_color_surface_top`) |
-| `pressed` / `surfaceContainerHigh` | `#E6E6E6` | `#33FFFFFF` | List row press tint (`coui_color_card_pressed`) & `"You might be looking for"` footer |
-| `accent` (COUI Blue — `CouiColor.Day/Night`) | `#0080FF` (Settings 17) / `#0066FF` (`coui_color_blue`) | `#1A8CFF` (Settings 17) / `#247CFF` (`_dark`) | Checked `Switch` track, primary CTA, active sliders |
+| `pressed` / `surfaceContainerHigh` | `#E8E9EB` | `#2C2C2E` / `#33FFFFFF` | List row press tint (`coui_color_card_pressed`) & `"You might be looking for"` footer |
+| `accent` (COUI Blue — `CouiColor.Day/Night`) | `#0080FF` (Settings 17) / `#0066FF` (`coui_color_blue`) | `#1A8CFF` (Settings 17) / `#247CFF` (`_dark`) | Checked `Switch` track, primary CTA, borderless inline actions (`Copy`) |
 | `accentOnSurface` | `#0080FF` / `#0066FF` | `#5C9DFF` | Theme-tinted links & icons inside dark cards |
-| `onSurface` (Primary Title) | `#E6000000` (90% black) | `#E6FFFFFF` (90% white) | Card row titles, headlines |
-| `onSurfaceVariant` (Summary / Header) | `#8A000000` (54% black) | `#8AFFFFFF` (54% white) | Group titles, trailing assignments, subtitles |
-| `onSurfaceSummary` (Tertiary Caption) | `#66000000` (40% black) | `#66FFFFFF` (40% white) | Footers & explanatory captions |
-| `disabled` (Neutral Text/Icons) | `#42000000`–`#4D000000` | `#4DFFFFFF` | Disabled titles & chevrons |
-| `outlineVariant` / `dividerLine` | `#1F000000` (12% black) | `#33FFFFFF` (20% white) | `0.33.dp`–`0.5.dp` (`>= 1px`) card-internal dividers |
+| `switchTrackOff` (`secondary`) | `#D8DADC` | `#48484A` | Unchecked `44dp × 24dp` COUI switch track |
+| `onSurface` (Primary Title) | `#E6000000` (90% black) | `#E6FFFFFF` (90% white) | Card row titles, top bar title, headlines |
+| `onSurfaceSecondary` (Section Header) | `#7F7F7F` | `#8AFFFFFF` (54% white) | Section group titles (`eSIM Profiles`, `Tethering`, `Advanced`) |
+| `onSurfaceVariantSummary` (Subtitle / Value) | `#8C8C8C` | `#73FFFFFF` (45% white) | Row summaries, trailing status values (`Off`, `80%`, `5240 mAh`) |
+| `disabled` / `chevron` | `#4D000000` | `#4DFFFFFF` | Disabled titles & trailing `>` chevrons |
+| `outlineVariant` / `dividerLine` | `#14000000` (8% black) | `#24FFFFFF` (14% white) | `1.dp` card-internal dividers inset `16.dp` horizontally |
 | `windowDimming` | `#33000000` (20% black) | `#99000000` (60% black) | Modal dialog & bottom-sheet scrim (`coui_color_mask`) |
 | `sliderBackground` | `#0D000000` | `#1AFFFFFF` | Unfilled seekbar/slider capsule track |
 | `sliderKeyPoint` | `#F2F2F2` | `#595959` | Section seekbar tick marks (`coui_section_seekbar`) |
 
 ### Semantic Status Palette (`CouiColor`)
 
-| Role | Light (`CouiColor.Day`) | Dark (`CouiColor.Night`) |
-|---|---|---|
-| Green (Healthy / Active) | `#00BD13` | `#24B232` |
-| Yellow (Caution / Pending) | `#FFB200` | `#E5A100` |
-| Orange (Alert) | `#FF7700` | `#F08222` |
-| Red (Error / Destructive) | `#EB3B2F` (`#DB382C` label) | `#EB493D` (`#FF6C61` label) |
+| Role | Light (`CouiColor.Day`) | Dark (`CouiColor.Night`) | Low-Profile Pill Container |
+|---|---|---|---|
+| Blue (Primary / Route) | `#0080FF` | `#5C9DFF` | `#180080FF` / `#331A8CFF` |
+| Green (Healthy / Active) | `#1F9D55` (`#00BD13` system) | `#4ADE80` (`#24B232` system) | `#1A1F9D55` / `#294ADE80` |
+| Yellow (Caution / Pending) | `#FFB200` | `#E5A100` | `#1FFFB200` / `#2EE5A100` |
+| Orange (Alert) | `#FF7700` | `#F08222` | `#1FFF7700` / `#2EF08222` |
+| Red (Error / Destructive) | `#EB3B2F` (`#DB382C` label) | `#EB493D` (`#FF6C61` label) | `#22EB3B2F` / `#38EB493D` |
 
 ### Material You Dynamic Seeding Compatibility (`CouiMaterial3Style`)
 
@@ -60,21 +63,21 @@ Never mix circular `RoundedCornerShape` on primary surfaces—always use `Contin
 |---|---|---|
 | Preference Card / Standalone Card | `20.dp` (`Capsule`) – `24.dp` (`CouiShape(24.dp, 3f)`) | Legacy COUI `1.28x` extension makes `20.dp` `ContinuousRoundedRectangle` match `24.dp` `CouiShape` |
 | Dual-column Hero Card (e.g., SIM 1 / SIM 2) | `20.dp` continuous | `12.dp` horizontal gap between paired cards |
-| Dialogs & Floating Modals | `28.dp`–`33.dp` continuous | `coui_dialog_os_16_1_radius_33_dp`; floating bottom dialogs inset `16.dp` horizontally |
+| Dialogs & Floating Modals | `24.dp`–`28.dp` continuous | Floating bottom dialogs inset `16.dp` horizontally |
 | Bottom Sheet Top Corners | `28.dp` continuous | `coui_panel_os_16_1_radius_28_dp` |
 | Popup Menus / Dropdowns | `16.dp` continuous | `coui_popup_list_window_os_16_1_radius_16_dp` |
-| Inner Icon Badge / Tile | `12.dp`–`16.dp` continuous | `12.dp` matches `couiRoundCornerM` |
-| Buttons, Chips, Floating Docks | `Capsule()` (`50%`) | `coui_btn_large_height_min = 44.dp` |
-| TopBar Back / Action Buttons | `CircleShape` (`40.dp × 40.dp`) | `1.dp` border (`#1F000000` light / `#33FFFFFF` dark) |
+| Inline Status Pill (`eSIM`, `Active`) | `ContinuousCapsule` | Compact `horizontal = 6.dp, vertical = 1.5.dp`, `10.5.sp` Medium |
+| Buttons, Chips, Floating Docks | `ContinuousCapsule` (`50%`) | `coui_btn_large_height_min = 44.dp–46.dp` |
+| TopBar Frosted Back Button | `CircleShape` (`42.dp–44.dp`) | `#E6FFFFFF` fill, `0.5.dp` gradient rim, `4.dp–6.dp` ambient shadow, `22–24.dp` `2.dp`-stroke arrow |
 
-### Layout Metrics
+### Layout Metrics (Calibrated to ColorOS 17 Settings Subpages)
 
-- **Page horizontal card margin:** `16.dp`
-- **Card spacing (unlabelled):** `12.dp` (stacked single-row cards) – `16.dp` (major sections)
-- **Section header spacing:** `12.dp` top gap; header text padded `horizontal = 32.dp, vertical = 8.dp`
-- **Settings row height:** `minHeight = 48.dp` (`+2.dp` top padding on first item, `+2.dp` bottom padding on last item in multi-row cards)
-- **Settings row internal padding:** `horizontal = 16.dp, vertical = 10.dp–14.dp`
-- **Detail TopBar height:** `52.dp` below `WindowInsets.statusBars`
+- **Page outer screen margin:** `16.dp`
+- **Card spacing (unlabelled):** `12.dp` between stacked standalone cards
+- **Section header spacing:** `8.dp` top spacer + `padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 6.dp)` inside `16.dp` list padding = **`32.dp` total inset from screen edge**
+- **Settings row density:** `minHeight = 52.dp`, internal `PaddingValues(horizontal = 16.dp, vertical = 14.dp)` (no bulky left icon boxes on standard text/toggle rows)
+- **Internal dividers:** `1.dp` `#14000000` (light) / `#24FFFFFF` (dark), inset `16.dp` horizontally to align cleanly with row text
+- **Detail TopBar height:** `60.dp` below `WindowInsets.statusBars`, floated over content with a soft vertical surface scrim
 
 ---
 
@@ -97,12 +100,13 @@ TextStyle(
 | Role | Size | Weight | Color / Usage |
 |---|---|---|---|
 | Expanded Large Title | `32.sp`–`40.sp` | `Bold` (`700`) | `onSurface`, inside collapsible `LargeTopAppBar` |
-| Detail TopBar Title | `18.dp.toSp()` | `FontWeight(550)` | Single-line ellipsis next to `40.dp` back button |
-| Section Category Header | `12.sp`–`13.sp` | `Medium` (`500`) | `onSurfaceVariant`, `padding(horizontal = 32.dp, vertical = 8.dp)` |
+| Detail TopBar Title | `19.5.sp` | `Medium` (`500`) | Single-line ellipsis, `12.dp` right of `44.dp` frosted back button |
+| Section Category Header | `13.sp` | `Medium` (`500`) | `#7F7F7F` light / `#8AFFFFFF` dark, `32.dp` total screen inset |
 | Preference Row Title | `16.sp` | `Medium` (`500`) | `onSurface` |
-| Preference Summary | `13.sp`–`14.sp` | `Normal` (`400`) | `onSurfaceVariant` / `onSurfaceSummary`, `2.dp` below title |
-| Trailing Value | `14.sp` | `Normal` (`400`) | `onSurfaceVariant`, `4.dp`–`8.dp` before chevron |
-| Pill Button Label | `15.sp`–`16.sp` | `FontWeight(550)` | Centered in `Capsule()` (`minHeight = 44.dp`) |
+| Preference Summary | `13.sp` | `Normal` (`400`) | `#8C8C8C` light / `#73FFFFFF` dark, `2.dp` below title |
+| Trailing Value / Action | `14.sp` | `Normal` (value) / `Medium` (action) | `#8C8C8C` for passive status (`Off`, `80%`), `#0080FF` for borderless inline actions (`Copy`) |
+| Inline Status Badge | `10.5.sp` | `Medium` (`500`) | Sleek low-profile tinted `ContinuousCapsule` (`eSIM`, `Active`) |
+| Pill Button Label | `16.sp` | `Medium` (`500`) | Centered in `ContinuousCapsule` (`minHeight = 46.dp`) |
 
 ---
 
@@ -112,6 +116,6 @@ Do **not** use generic heavy `LONG_PRESS` vibrations when Oplus ROM haptic codes
 
 | Event | Constant Code | Enum / Usage | Fallback on Non-Oplus ROMs |
 |---|---|---|---|
-| Switch Toggle | **`302`** | `CouiHapticFeedback.Switch` | `HapticFeedbackConstants.CLOCK_TICK` / `TextHandleMove` |
+| Switch Toggle / Inline Action Tap | **`302`** | `CouiHapticFeedback.Switch` | `HapticFeedbackConstants.CLOCK_TICK` |
 | List Overscroll / Edge | **`307`** | `CouiHapticFeedback.ScrollEdge` | Omit or subtle edge feedback |
 | Picker / Slider Detent | **`308`** | Section seekbar step / wheel tick | `302` -> `SEGMENT_TICK` (`26`) -> `CLOCK_TICK` |
