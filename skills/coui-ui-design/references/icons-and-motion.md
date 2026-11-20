@@ -52,9 +52,9 @@ COUI avoids sharp Material ripples (`indication = null`) and instead drives tact
 
 | Interaction | Physics / Constants | Behavior |
 |---|---|---|
-| **Standard Card / Button Press** (`CouiPressMotion`) | `response = 0.25f` (`0.3f` pills), `bounce = 0f` | Scales down toward `0.85f..0.97f` proportional to view area (`0.94f` with `dampingRatio = 0.70f, stiffness = 600f` for the `46.dp` `AndroidLiquidGlass` circular back button, paired with the wide-winged `24.dp`–`25.dp` `1.65.dp`-stroke back arrow) |
+| **Standard Card / Button Press** (`CouiPressMotion`) | `response = 0.25f` (`0.3f` pills), `bounce = 0f` | Scales down toward `0.85f..0.97f` proportional to view area (`0.94f` with `dampingRatio = 0.70f, stiffness = 600f` for the `40.dp` `AndroidLiquidGlass` circular back button, paired with the exact stock `coui_back_arrow_normal` `22.dp` `1.4.dp`-stroke arrow) |
 | **Card / Button Release** | `response = 0.5f`, `bounce = 0.6f` (`0.5f` pills) | Smooth elastic return to `1.0f` preserving interruptible velocity |
-| **List Rubber-Band Overscroll** (`couiBouncyOverscroll`) | `maxOffset * (1 - exp(-|drag| / k))`, `dampingRatio = 0.72f`, `stiffness = 380f` | Translates list via `graphicsLayer.translationY` at both top & bottom edges without vertical text stretch; works on single-screen and multi-screen lists |
+| **List Rubber-Band Overscroll** (`CouiOverscrollFactory` / `OverscrollEffect`) | `0.4 * (1 - \|offset\| / screenSize)` drag, `SpringOverScroller` RK4 (`friction = 12.19`, `tension = 16 * 2.15`), over-fling saturation `37.31%` | Native Compose `OverscrollEffect` with `LayoutModifierNode` `placeWithLayer` + `withFrameNanos` + haptic `307`. Zero pointer-coordinate feedback, zero snap-back on 0-velocity release |
 | **Switch Toggle** (`CouiSwitchMotion`) | `response = 0.4f`, `bounce = 0.3f` | Thumb moves across `44.dp` track while stretching to `1.3x` width at `p = 0.347` |
 | **Switch Drag / Attach** | `response = 0.3f / 0.4f`, `bounce = 0f / 0.2f` | Instant finger tracking (`bounce = 0f`), snappy magnetic attach (`bounce = 0.2f`) |
 | **Loading Switch** | `800ms` linear loop | Thumb shrinks to `0f`; `312°` rotating arc renders inside track while disabled |

@@ -299,12 +299,11 @@ Box(
             .layerBackdrop(backdrop)
             .background(CouiTheme.colors.surface),
     ) {
-        CompositionLocalProvider(LocalOverscrollFactory provides null) {
+        CompositionLocalProvider(LocalOverscrollFactory provides CouiOverscrollFactory) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .couiBouncyOverscroll()
                     .navigationBarsPadding(),
                 contentPadding = PaddingValues(
                     start = 16.dp,
@@ -330,94 +329,38 @@ Box(
 
 ---
 
-## 5. ColorOS 17 Rubber-Band Bouncy Overscroll (Single-Screen & Multi-Screen)
+## 5. ColorOS 17 Native `OverscrollEffect` (`SpringOverScroller` RK4 Physics)
 
-Native ColorOS 17 lists smoothly translate vertically past top and bottom boundaries with progressive exponential resistance and elastic spring rebound—never stretching typography like AOSP `StretchOverscroll`.
+Native ColorOS 17 lists smoothly translate vertically past top and bottom boundaries with progressive resistance (`0.4 * (1 - |offset| / screenSize)`) and RK4 spring rebound (`SPRING_BACK_FRICTION = 12.19f`, `SPRING_BACK_TENSION = 16f`, vertical tension multiple `2.15f`) — never stretching typography like AOSP `StretchOverscroll`.
 
-Always disable default Compose overscroll (`LocalOverscrollFactory provides null`) and attach `Modifier.couiBouncyOverscroll()` directly to the `LazyColumn` (works even when all cards fit on one screen):
+> **Single-Screen vs Multi-Screen Rule (verified on live ColorOS 17 + `suqi8/coui`):**
+> - **Multi-screen lists** (content taller than viewport): provide `CompositionLocalProvider(LocalOverscrollFactory provides CouiOverscrollFactory)`.
+> - **Single-screen lists** (all cards fit inside viewport, `!canScrollForward && !canScrollBackward`): Compose's `Scrollable` skips `OverscrollEffect.applyToScroll`. Pair `LocalOverscrollFactory provides null` with `Modifier.couiOverScrollVertical()` (`DelegatingNode` + `nestedScrollModifierNode` + `LayoutModifierNode` `placeWithLayer` sharing the exact same `CouiReboundOverScroller` RK4 physics — zero `pointerInput` hacks!).
+> Never attach `Modifier.nestedScroll().pointerInput().graphicsLayer { translationY = ... }` on the outside of a `LazyColumn`. Translating the same node that processes pointer input feeds offsets back into touch coordinates and races between `ACTION_UP` and `onPreFling`, causing inconsistent instant snap-backs.
+> Always implement Jetpack Compose's native **`OverscrollEffect` + `OverscrollFactory`** (`LocalOverscrollFactory provides CouiOverscrollFactory`, as pioneered in `suqi8/coui`) with an internal `LayoutModifierNode` (`placeable.placeWithLayer(0, 0) { translationY = round(effect.offsetY); clip = true }`). Compose's `Scrollable` guarantees `applyToFling` runs on every release (even 0-velocity slow releases) and passes leftover fling velocity cleanly for over-fling overshoot (`37.31%` screen saturation) + edge haptic `307`.
 
 ```kotlin
-fun Modifier.couiBouncyOverscroll(
-    maxOffset: Dp = 148.dp,
-    dampingFactor: Dp = 320.dp,
-): Modifier = composed {
-    val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
-    val maxOffsetPx = remember(density, maxOffset) { with(density) { maxOffset.toPx() } }
-    val kPx = remember(density, dampingFactor) { with(density) { dampingFactor.toPx() } }
-    val overscrollOffset = remember { Animatable(0f) }
-    var rawDrag by remember { mutableFloatStateOf(0f) }
-
-    fun rubberBand(raw: Float): Float =
-        if (raw == 0f) 0f else sign(raw) * maxOffsetPx * (1f - exp(-abs(raw) / kPx))
-
-    fun releaseSpring() {
-        rawDrag = 0f
-        if (abs(overscrollOffset.value) > 0.5f) {
-            scope.launch {
-                overscrollOffset.animateTo(0f, spring(dampingRatio = 0.72f, stiffness = 380f))
-            }
-        }
-    }
-
-    val connection = remember(maxOffsetPx, kPx) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (source != NestedScrollSource.UserInput || available.y == 0f) return Offset.Zero
-                if (rawDrag != 0f && sign(available.y) != sign(rawDrag)) {
-                    val prev = rawDrag
-                    val next = prev + available.y
-                    val consumedY = if (sign(next) != sign(prev)) { rawDrag = 0f; -prev } else { rawDrag = next; available.y }
-                    scope.launch { overscrollOffset.snapTo(rubberBand(rawDrag)) }
-                    return Offset(0f, consumedY)
-                }
-                return Offset.Zero
-            }
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (source != NestedScrollSource.UserInput || available.y == 0f) return Offset.Zero
-                rawDrag += available.y
-                scope.launch { overscrollOffset.snapTo(rubberBand(rawDrag)) }
-                return Offset(0f, available.y)
-            }
-            override suspend fun onPreFling(available: Velocity): Velocity {
-                if (abs(overscrollOffset.value) > 0.5f || rawDrag != 0f) {
-                    releaseSpring()
-                    return Velocity(0f, available.y)
-                }
-                return Velocity.Zero
-            }
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (abs(overscrollOffset.value) > 0.5f || rawDrag != 0f) releaseSpring()
-                return Velocity.Zero
-            }
-        }
-    }
-
-    this
-        .nestedScroll(connection)
-        .pointerInput(Unit) {
-            awaitPointerEventScope {
-                while (true) {
-                    val event = awaitPointerEvent(PointerEventPass.Final)
-                    if (event.changes.none { it.pressed } && (abs(overscrollOffset.value) > 0.5f || rawDrag != 0f)) {
-                        releaseSpring()
-                    }
-                }
-            }
-        }
-        .graphicsLayer { translationY = overscrollOffset.value }
+object CouiOverscrollFactory : OverscrollFactory {
+    override fun createOverscrollEffect(): OverscrollEffect = CouiOverscrollEffect()
+    override fun equals(other: Any?): Boolean = this === other
+    override fun hashCode(): Int = 17
 }
-```
 
-Usage:
-```kotlin
-CompositionLocalProvider(LocalOverscrollFactory provides null) {
+// Usage (replaces AOSP StretchOverscroll cleanly across every LazyColumn / scrollable):
+CompositionLocalProvider(LocalOverscrollFactory provides CouiOverscrollFactory) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().couiBouncyOverscroll().navigationBarsPadding(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = statusBarTop + 68.dp, bottom = 24.dp),
+        modifier = Modifier.fillMaxSize().navigationBarsPadding(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = statusBarTop + 68.dp, bottom = 28.dp),
     ) { /* CouiCard items */ }
 }
 ```
+
+Key physics constants (1:1 port of ColorOS 17 `COUIRecyclerView` / `SpringOverScroller` via `suqi8/coui`):
+- **Drag resistance:** `delta * 0.4f * (1f - min(|offset| / screenHeight, 1f))`
+- **Spring-back RK4:** Origami `friction = 12.19f`, `tension = 16f * 2.15f` (vertical) / `16f * 3.2f` (horizontal), stepped via `withFrameNanos`
+- **Over-fling saturation:** `over * limit / sqrt(over² + limit²)` where `limit = screenHeight * 0.3731f`
+- **Reverse fling threshold:** `6000 px/s` (flings back through edge and hands leftover velocity to `LazyColumn`)
+- **Edge haptic:** `LocalView.current.performHapticFeedback(307)` on overscroll release (`dragTravel >= 10px`) or fling edge hit
 
 ---
 
